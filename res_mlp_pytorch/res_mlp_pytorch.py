@@ -3,17 +3,15 @@ from torch import nn, einsum
 from einops.layers.torch import Rearrange, Reduce
 
 class Affine(nn.Module):
-    def __init__(self, dim, fn):
+    def __init__(self, dim):
         super().__init__()
         self.g = nn.Parameter(torch.ones(1, 1, dim))
         self.b = nn.Parameter(torch.zeros(1, 1, dim))
-        self.fn = fn
 
     def forward(self, x):
-        x = x * self.g + self.b
-        return self.fn(x)
+        return x * self.g + self.b
 
-class LayerScaleResidual(nn.Module): # https://arxiv.org/abs/2103.17239
+class PreAffinePostLayerScale(nn.Module): # https://arxiv.org/abs/2103.17239
     def __init__(self, dim, depth, fn):
         super().__init__()
         if depth <= 18:
@@ -25,15 +23,16 @@ class LayerScaleResidual(nn.Module): # https://arxiv.org/abs/2103.17239
 
         scale = torch.zeros(1, 1, dim).fill_(init_eps)
         self.scale = nn.Parameter(scale)
+        self.affine = Affine(dim)
         self.fn = fn
 
     def forward(self, x):
-        return self.fn(x) * self.scale + x
+        return self.fn(self.affine(x)) * self.scale + x
 
 def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor = 4):
     assert (image_size % patch_size) == 0, 'image must be divisible by patch size'
     num_patches = (image_size // patch_size) ** 2
-    wrapper = lambda i, fn: LayerScaleResidual(dim, i + 1, Affine(dim, fn))
+    wrapper = lambda i, fn: PreAffinePostLayerScale(dim, i + 1, fn)
 
     return nn.Sequential(
         Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = patch_size, p2 = patch_size),
@@ -46,6 +45,7 @@ def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor 
                 nn.Linear(dim * expansion_factor, dim)
             ))
         ) for i in range(depth)],
+        Affine(dim),
         Reduce('b n c -> b c', 'mean'),
         nn.Linear(dim, num_classes)
     )
