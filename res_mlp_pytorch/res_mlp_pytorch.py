@@ -12,7 +12,7 @@ class Affine(nn.Module):
     def forward(self, x):
         return self.fn(x) * self.g + self.b
 
-class LayerScale(nn.Module): # https://arxiv.org/abs/2103.17239
+class LayerScaleResidual(nn.Module): # https://arxiv.org/abs/2103.17239
     def __init__(self, dim, depth, fn):
         super().__init__()
         if depth <= 18:
@@ -26,13 +26,13 @@ class LayerScale(nn.Module): # https://arxiv.org/abs/2103.17239
         self.scale = nn.Parameter(scale)
         self.fn = fn
 
-    def forward(self, x, **kwargs):
-        return self.fn(x, **kwargs) * self.scale
+    def forward(self, x):
+        return self.fn(x) * self.scale + x
 
 def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor = 4):
     assert (image_size % patch_size) == 0, 'image must be divisible by patch size'
     num_patches = (image_size // patch_size) ** 2
-    wrapper = lambda i, fn: LayerScale(dim, i + 1, Affine(dim, fn))
+    wrapper = lambda i, fn: LayerScaleResidual(dim, i + 1, Affine(dim, fn))
 
     return nn.Sequential(
         Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = patch_size, p2 = patch_size),
