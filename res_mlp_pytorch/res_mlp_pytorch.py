@@ -29,7 +29,7 @@ class LayerScale(nn.Module): # https://arxiv.org/abs/2103.17239
     def forward(self, x, **kwargs):
         return self.fn(x, **kwargs) * self.scale
 
-def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor = 4, dropout = 0.):
+def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor = 4):
     assert (image_size % patch_size) == 0, 'image must be divisible by patch size'
     num_patches = (image_size // patch_size) ** 2
     wrapper = lambda i, fn: LayerScale(dim, i + 1, Affine(dim, fn))
