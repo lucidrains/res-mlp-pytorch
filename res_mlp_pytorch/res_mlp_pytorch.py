@@ -10,7 +10,8 @@ class Affine(nn.Module):
         self.fn = fn
 
     def forward(self, x):
-        return self.fn(x) * self.g + self.b
+        x = x * self.g + self.b
+        return self.fn(x)
 
 class LayerScaleResidual(nn.Module): # https://arxiv.org/abs/2103.17239
     def __init__(self, dim, depth, fn):
