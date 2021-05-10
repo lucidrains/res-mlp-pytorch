@@ -1,3 +1,5 @@
+<img src="./resmlp.png" width="450px"></img>
+
 ## ResMLP - Pytorch
 
 Implementation of <a href="https://arxiv.org/abs/2105.03404">ResMLP</a>, an all MLP solution to image classification out of Facebook AI, in Pytorch
