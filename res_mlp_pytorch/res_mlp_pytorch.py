@@ -2,6 +2,13 @@ import torch
 from torch import nn, einsum
 from einops.layers.torch import Rearrange, Reduce
 
+# helpers
+
+def pair(val):
+    return (val, val) if not isinstance(val, tuple) else val
+
+# classes
+
 class Affine(nn.Module):
     def __init__(self, dim):
         super().__init__()
@@ -30,8 +37,9 @@ class PreAffinePostLayerScale(nn.Module): # https://arxiv.org/abs/2103.17239
         return self.fn(self.affine(x)) * self.scale + x
 
 def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor = 4):
-    assert (image_size % patch_size) == 0, 'image must be divisible by patch size'
-    num_patches = (image_size // patch_size) ** 2
+    image_height, image_width = pair(image_size)
+    assert (image_height % patch_size) == 0 and (image_width % patch_size) == 0, 'image height and width must be divisible by patch size'
+    num_patches = (image_height // patch_size) * (image_width // patch_size)
     wrapper = lambda i, fn: PreAffinePostLayerScale(dim, i + 1, fn)
 
     return nn.Sequential(

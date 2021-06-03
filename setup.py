@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
   name = 'res-mlp-pytorch',
   packages = find_packages(exclude=[]),
-  version = '0.0.5',
+  version = '0.0.6',
   license='MIT',
   description = 'ResMLP - Pytorch',
   author = 'Phil Wang',

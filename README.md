@@ -28,6 +28,24 @@ img = torch.randn(1, 3, 256, 256)
 pred = model(img) # (1, 1000)
 ```
 
+Rectangular image
+
+```python
+import torch
+from res_mlp_pytorch import ResMLP
+
+model = ResMLP(
+    image_size = (128, 256), # (128 x 256)
+    patch_size = 16,
+    dim = 512,
+    depth = 12,
+    num_classes = 1000
+)
+
+img = torch.randn(1, 3, 128, 256)
+pred = model(img) # (1, 1000)
+```
+
 ## Citations
 
 ```bibtex
