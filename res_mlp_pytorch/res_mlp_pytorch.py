@@ -36,7 +36,7 @@ class PreAffinePostLayerScale(nn.Module): # https://arxiv.org/abs/2103.17239
     def forward(self, x):
         return self.fn(self.affine(x)) * self.scale + x
 
-def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor = 4):
+def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor = 4, dropout_rate=0.0):
     image_height, image_width = pair(image_size)
     assert (image_height % patch_size) == 0 and (image_width % patch_size) == 0, 'image height and width must be divisible by patch size'
     num_patches = (image_height // patch_size) * (image_width // patch_size)
@@ -50,7 +50,9 @@ def ResMLP(*, image_size, patch_size, dim, depth, num_classes, expansion_factor 
             wrapper(i, nn.Sequential(
                 nn.Linear(dim, dim * expansion_factor),
                 nn.GELU(),
-                nn.Linear(dim * expansion_factor, dim)
+                nn.Dropout(p=dropout_rate),
+                nn.Linear(dim * expansion_factor, dim),
+                nn.Dropout(p=dropout_rate),
             ))
         ) for i in range(depth)],
         Affine(dim),
